@@ -25,16 +25,13 @@ feature_row:
 {% endif %}
 
 <figure>
-  <a href="/assets/images/unsplash-gallery-image-2.jpg" class="image-popup" title="This is a figure caption.">
+  <a href="/assets/images/unsplash-gallery-image-2.jpg" class="image-popup" title="This is a figure caption." width=500px height=400px>
     <img src="/assets/images/unsplash-gallery-image-2.jpg" alt="this is a placeholder image">
   </a>
   <figcaption>This is a figure caption.</figcaption>
 </figure>
 
 <div id="main" role="main">
-  <body>
-    {% include feature_row %}
-  </body>
   <article class="splash" itemscope itemtype="https://schema.org/CreativeWork"{% if page.locale %} lang="{{ page.locale }}"{% endif %}>
     {% if page.title %}<meta itemprop="headline" content="{{ page.title | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
     {% if page.excerpt %}<meta itemprop="description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
@@ -43,6 +40,7 @@ feature_row:
     
     <section class="page__content" itemprop="text">
       {{ content }}
+      {% include feature_row %}
     </section>
   </article>
 </div>
