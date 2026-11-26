@@ -1,0 +1,63 @@
+name: Publish blog to GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out site files
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare static site
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const url = process.env.SUPABASE_URL || '';
+          const key = process.env.SUPABASE_PUBLISHABLE_KEY || '';
+          if (!url || !key) {
+            console.error('Set the repository Actions variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY before deploying.');
+            process.exit(1);
+          }
+          if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)) {
+            console.error('SUPABASE_URL must be your project URL, for example https://example.supabase.co.');
+            process.exit(1);
+          }
+          fs.mkdirSync('_site', { recursive: true });
+          for (const file of ['index.html', 'style.css', 'script.js']) fs.copyFileSync(file, path.join('_site', file));
+          fs.writeFileSync(path.join('_site', 'config.js'), `window.BLOG_CONFIG = ${JSON.stringify({ supabaseUrl: url, supabaseAnonKey: key, authorGithubUsername: 'mjkang312' })};\n`);
+          fs.writeFileSync(path.join('_site', '.nojekyll'), '');
+          NODE
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
